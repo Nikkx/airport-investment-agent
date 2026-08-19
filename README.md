@@ -15,6 +15,13 @@ From the project root, run:
 streamlit run main.py
 ```
 
+**Run Tests:**
+From the project root, run:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
 ## Capabilities and Scope
 
 - **Deterministic scoring:** Airport expansion scores are calculated by Python tools using live Aviationstack flight data. The language model explains and compares those results; it does not invent the score.
