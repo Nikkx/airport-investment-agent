@@ -1,6 +1,6 @@
 import streamlit as st
-from agent import create_chat_session, create_client, send_prompt
 from tools import AviationstackError
+from agent import create_chat_session, create_client, send_prompt
 
 
 def render_chatbot_app() -> None:
@@ -43,13 +43,17 @@ def render_chatbot_app() -> None:
             try:
                 response = send_prompt(st.session_state.chat_session, prompt)
                 st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": response.text}
+                )
             except AviationstackError as e:
                 st.error(f"Aviationstack error: {e}")
                 st.stop()
             except RuntimeError as e:
                 st.warning(str(e))
-                st.session_state.messages.append({"role": "assistant", "content": str(e)})
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": str(e)}
+                )
             except Exception as e:
                 st.error(f"An error occurred while generating response: {e}")
                 st.stop()

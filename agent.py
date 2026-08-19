@@ -5,7 +5,11 @@ from google import genai
 from google.genai import errors
 from google.genai import types
 
-from tools import calculate_expansion_score as fetch_expansion_score
+from tools import (
+    assess_unmet_demand as fetch_unmet_demand,
+    calculate_expansion_score as fetch_expansion_score,
+    calculate_long_haul_percentage as fetch_long_haul_percentage,
+)
 
 
 def load_agent_instructions() -> str:
@@ -23,7 +27,9 @@ def create_client(api_key: str) -> genai.Client:
     return genai.Client(api_key=api_key)
 
 
-def build_expansion_tool(aviationstack_key: str) -> Callable[[str], dict]:
+def build_expansion_tool(
+    aviationstack_key: str,
+) -> Callable[[str], dict[str, object]]:
     def calculate_expansion_score(airport_code: str) -> dict:
         """Fetch live airport data and calculate its expansion score."""
         return fetch_expansion_score(airport_code, aviationstack_key)
@@ -31,20 +37,44 @@ def build_expansion_tool(aviationstack_key: str) -> Callable[[str], dict]:
     return calculate_expansion_score
 
 
+def build_long_haul_tool(
+    aviationstack_key: str,
+) -> Callable[[str], dict[str, object]]:
+    def calculate_long_haul_percentage(airport_code: str) -> dict:
+        """Calculate an airport's long-haul flight percentage from live data."""
+        return fetch_long_haul_percentage(airport_code, aviationstack_key)
+
+    return calculate_long_haul_percentage
+
+
+def build_unmet_demand_tool(
+    aviationstack_key: str,
+) -> Callable[[str], dict[str, object]]:
+    def assess_unmet_demand(airport_code: str) -> dict:
+        """Assess operational indicators related to unmet demand."""
+        return fetch_unmet_demand(airport_code, aviationstack_key)
+
+    return assess_unmet_demand
+
+
 def create_chat_session(client: genai.Client, aviationstack_key: str):
+    """Create a Gemini chat session with the configured aviation tools."""
     instructions = load_agent_instructions()
     expansion_tool = build_expansion_tool(aviationstack_key)
+    long_haul_tool = build_long_haul_tool(aviationstack_key)
+    unmet_demand_tool = build_unmet_demand_tool(aviationstack_key)
 
     return client.chats.create(
         model="gemini-3.5-flash-lite",
         config=types.GenerateContentConfig(
-            tools=[expansion_tool],
+            tools=[expansion_tool, long_haul_tool, unmet_demand_tool],
             system_instruction=instructions,
         ),
     )
 
 
 def send_prompt(chat_session, prompt: str):
+    """Send a prompt and translate common Gemini service errors."""
     try:
         return chat_session.send_message(prompt)
     except errors.ClientError as e:
