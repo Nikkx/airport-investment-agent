@@ -32,6 +32,8 @@ python -m unittest discover -s tests -v
 
 ## Design and Architecture
 
+The design separates the Streamlit chat interface, Gemini's conversational orchestration, and Python tools that retrieve public aviation data and perform deterministic calculations.
+
 ### Scoring Methodology
 
 The expansion recommendation score is calculated deterministically in Python from a live Aviationstack sample of up to 100 departing flights:
